@@ -1,0 +1,25 @@
+---
+
+- name: Check if mas is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/mas
+  register: max_binary
+
+- name: Check if apple id is logged in
+  ansible.builtin.shell:
+    cmd: /usr/local/bin/mas account
+    executable: /bin/zsh
+  register: account
+  changed_when: account.rc != 0
+
+- name: Manage appstore applications
+  when: max_binary.stat.exists and account.stdout == apple_id
+  block:
+
+    - name: Install applications and upgrade from the appstore
+      community.general.mas:
+        id: {{ item.name | int }}
+        state: "{{ item.state }}"
+        upgrade_all: true
+      when: ansible_distribution == "MacOSX" and ansible_pkg_mgr == "homebrew"
+
